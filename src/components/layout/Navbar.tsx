@@ -8,9 +8,7 @@ import { useWishlist } from "@/context/WishlistContext";
 import { useAuth } from "@/context/AuthContext";
 import { categoriesApi } from "@/api/categories";
 import SearchModal from "@/components/search/SearchModal";
-import { useBranding } from "@/hooks/useBranding";
 
-// أيقونات افتراضية لو التصنيف مجاش بـ icon
 const DEFAULT_ICON = "📦";
 const ICON_MAP: Record<string, string> = {
   "إضاءة": "💡", "إضاءة ذكية": "💡",
@@ -44,7 +42,6 @@ const Navbar = () => {
   const { count, setOpen: setCartOpen } = useCart();
   const { ids } = useWishlist();
   const { user, isAdmin, signOut } = useAuth();
-  const branding = useBranding();
   const [scrolled, setScrolled] = useState(false);
   const [megaOpen, setMegaOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -54,7 +51,6 @@ const Navbar = () => {
   const userMenuRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
 
-  // جيب التصنيفات من الـ API
   useEffect(() => {
     categoriesApi.getAll()
       .then((data) => {
@@ -98,18 +94,10 @@ const Navbar = () => {
         <div className="container flex items-center justify-between h-16 md:h-20">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2 group">
-            {branding.logo_url ? (
-              <img
-                src={branding.logo_url}
-                alt={branding.site_name}
-                className="h-10 w-10 rounded-full object-cover group-hover:scale-110 transition-transform ring-2 ring-primary/20"
-              />
-            ) : (
-              <span className="w-10 h-10 rounded-xl bg-gradient-primary flex items-center justify-center shadow-elegant group-hover:scale-110 transition-transform">
-                <Zap className="w-5 h-5 text-primary-foreground fill-primary-foreground" />
-              </span>
-            )}
-            <span className="font-extrabold text-xl tracking-tight">{branding.site_name}</span>
+           <img src="/logo.png" className="w-10 h-10 rounded-full object-cover ring-2 ring-primary/30 group-hover:scale-110 transition-transform" alt="Smart Vibe" />
+            <span className="font-extrabold text-xl tracking-tight">
+              Smart <span className="text-primary">Vibe</span>
+            </span>
           </Link>
 
           {/* Center nav */}
@@ -141,7 +129,6 @@ const Navbar = () => {
               {count > 0 && <Badge>{count}</Badge>}
             </IconBtn>
 
-            {/* User Button */}
             <div className="relative hidden sm:block" ref={userMenuRef}>
               <button
                 onClick={() => user ? setUserMenuOpen(!userMenuOpen) : navigate("/login")}
@@ -213,7 +200,6 @@ const Navbar = () => {
           </div>
         </div>
 
-        {/* Mega menu — من الـ API */}
         <AnimatePresence>
           {megaOpen && (
             <motion.div onMouseEnter={() => setMegaOpen(true)} onMouseLeave={() => setMegaOpen(false)}
@@ -224,16 +210,11 @@ const Navbar = () => {
                   <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5 pointer-events-none" />
                   <div className="relative grid grid-cols-2 md:grid-cols-4 gap-3 p-5">
                     {categories.length === 0 ? (
-                      // Skeleton loading
                       Array.from({ length: 4 }).map((_, idx) => (
                         <div key={idx} className="rounded-2xl p-4 bg-background/60 border border-transparent animate-pulse">
                           <div className="flex items-center gap-3 mb-3">
                             <div className="w-11 h-11 rounded-xl bg-muted" />
                             <div className="h-4 w-24 bg-muted rounded" />
-                          </div>
-                          <div className="space-y-2">
-                            <div className="h-3 w-20 bg-muted rounded" />
-                            <div className="h-3 w-16 bg-muted rounded" />
                           </div>
                         </div>
                       ))
@@ -268,14 +249,13 @@ const Navbar = () => {
         </AnimatePresence>
       </motion.header>
 
-      {/* Mobile menu */}
       <AnimatePresence>
         {mobileOpen && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             className="fixed inset-0 z-50 bg-background/95 backdrop-blur-xl md:hidden">
             <div className="container flex flex-col h-full pt-6">
               <div className="flex justify-between items-center mb-12">
-                <span className="font-extrabold text-xl">{branding.site_name}</span>
+                <span className="font-extrabold text-xl">Smart <span className="text-primary">Vibe</span></span>
                 <button onClick={() => setMobileOpen(false)} className="p-2"><X className="w-6 h-6" /></button>
               </div>
               {user && (
@@ -293,7 +273,6 @@ const Navbar = () => {
                 {links.map((l) => (
                   <Link key={l.label} to={l.to.startsWith("#") ? "/" : l.to} onClick={() => setMobileOpen(false)}>{l.label}</Link>
                 ))}
-                {/* التصنيفات في الموبايل */}
                 {categories.length > 0 && (
                   <div className="flex flex-col gap-2 mt-2">
                     <p className="text-sm text-muted-foreground font-semibold">التصنيفات</p>
