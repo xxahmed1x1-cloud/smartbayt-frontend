@@ -1,7 +1,7 @@
 export const formatPrice = (n: number) =>
   `${n.toLocaleString("ar-EG")} جنيه`;
 
-const BASE_URL = "http://localhost:5224";
+const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5224";
 
 /**
  * يحوّل المسار الجاي من الـ API لـ URL كامل
