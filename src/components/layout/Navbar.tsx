@@ -94,9 +94,7 @@ const Navbar = () => {
         <div className="container flex items-center justify-between h-16 md:h-20">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2 group">
-            <span className="w-10 h-10 rounded-full bg-gradient-primary flex items-center justify-center shadow-elegant group-hover:scale-110 transition-transform ring-2 ring-primary/30">
-              <Zap className="w-5 h-5 text-primary-foreground fill-primary-foreground" />
-            </span>
+            <img src="/logo.png" className="w-10 h-10 rounded-full object-cover ring-2 ring-primary/30 group-hover:scale-110 transition-transform" alt="Smart Vibe" />
             <span className="font-extrabold text-xl tracking-tight">
               Smart <span className="text-primary">Vibe</span>
             </span>
