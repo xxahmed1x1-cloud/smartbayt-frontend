@@ -94,10 +94,7 @@ const Navbar = () => {
         <div className="container flex items-center justify-between h-16 md:h-20">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2 group">
-            <img src="/logo.png" className="w-10 h-10 rounded-full object-cover ring-2 ring-primary/30 group-hover:scale-110 transition-transform" alt="Smart Vibe" />
-            <span className="font-extrabold text-xl tracking-tight">
-              Smart <span className="text-primary">Vibe</span>
-            </span>
+            <img src="/logo.png" className="h-12 object-contain group-hover:scale-110 transition-transform" alt="Smart Vibe" />
           </Link>
 
           {/* Center nav */}
