@@ -1,18 +1,29 @@
-import { useEffect, useState } from "react";
-import { settingsApi } from "@/api/other";
+import { useEffect, useState, useRef } from "react";
+import { settingsApi, uploadApi } from "@/api/other";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, Upload, Loader2 } from "lucide-react";
 
 type Settings = Record<string, any>;
 const SOCIAL_PLATFORMS = ["facebook", "instagram", "youtube", "telegram", "twitter", "linkedin", "github", "whatsapp"];
 
+const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5224";
+const resolveImg = (p?: string | null) => {
+  if (!p) return "";
+  if (p.startsWith("http")) return p;
+  return `${BASE_URL}${p.startsWith("/") ? "" : "/"}${p}`;
+};
+
 export default function AdminSettings() {
   const [s, setS] = useState<Settings>({ branding: {}, hero: {}, contact: {}, footer: {}, about: {} });
+  const [uploadingLogo, setUploadingLogo] = useState(false);
+  const [uploadingHero, setUploadingHero] = useState(false);
+  const logoRef = useRef<HTMLInputElement>(null);
+  const heroRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     settingsApi.getAll().then((data: any[]) => {
@@ -42,6 +53,26 @@ export default function AdminSettings() {
   const set = (key: string, field: string, value: any) => setS((p) => ({ ...p, [key]: { ...p[key], [field]: value } }));
   const setFooter = (field: string, value: any) => set("footer", field, value);
 
+  const handleUploadLogo = async (file: File) => {
+    setUploadingLogo(true);
+    try {
+      const res = await uploadApi.upload(file);
+      set("branding", "logo_url", res.url);
+      toast.success("تم رفع اللوغو");
+    } catch { toast.error("فشل رفع الصورة"); }
+    finally { setUploadingLogo(false); }
+  };
+
+  const handleUploadHero = async (file: File) => {
+    setUploadingHero(true);
+    try {
+      const res = await uploadApi.upload(file);
+      set("hero", "image_url", res.url);
+      toast.success("تم رفع صورة Hero");
+    } catch { toast.error("فشل رفع الصورة"); }
+    finally { setUploadingHero(false); }
+  };
+
   const addCol = () => setFooter("cols", [...(s.footer.cols || []), { title: "عمود جديد", links: [] }]);
   const removeCol = (i: number) => setFooter("cols", s.footer.cols.filter((_: any, idx: number) => idx !== i));
   const updateCol = (i: number, field: string, value: any) => {
@@ -62,23 +93,56 @@ export default function AdminSettings() {
     <div className="space-y-6 max-w-4xl">
       <div><h1 className="text-3xl font-bold">إعدادات الموقع</h1></div>
 
+      {/* الهوية والشعار */}
       <Card className="p-5 space-y-3">
         <h2 className="font-semibold text-lg">الهوية والشعار</h2>
         <div><Label>اسم الموقع</Label><Input value={s.branding.site_name || ""} onChange={(e) => set("branding", "site_name", e.target.value)} /></div>
         <div><Label>الشعار التعريفي</Label><Input value={s.branding.tagline || ""} onChange={(e) => set("branding", "tagline", e.target.value)} /></div>
-        <div><Label>رابط اللوغو</Label><Input value={s.branding.logo_url || ""} onChange={(e) => set("branding", "logo_url", e.target.value)} placeholder="https://..." /></div>
+        <div>
+          <Label>صورة اللوغو</Label>
+          <div className="flex items-center gap-3 mt-1">
+            {s.branding.logo_url && (
+              <img src={resolveImg(s.branding.logo_url)} alt="logo" className="w-16 h-16 rounded-full object-cover border" />
+            )}
+            <div className="flex-1 space-y-2">
+              <Input value={s.branding.logo_url || ""} onChange={(e) => set("branding", "logo_url", e.target.value)} placeholder="https://..." />
+              <input ref={logoRef} type="file" accept="image/*" className="hidden" onChange={(e) => { if (e.target.files?.[0]) handleUploadLogo(e.target.files[0]); }} />
+              <Button type="button" variant="outline" size="sm" disabled={uploadingLogo} onClick={() => logoRef.current?.click()}>
+                {uploadingLogo ? <Loader2 className="w-4 h-4 animate-spin me-1" /> : <Upload className="w-4 h-4 me-1" />}
+                رفع من الجهاز
+              </Button>
+            </div>
+          </div>
+        </div>
         <Button onClick={() => save("branding")}>حفظ</Button>
       </Card>
 
+      {/* Hero */}
       <Card className="p-5 space-y-3">
         <h2 className="font-semibold text-lg">قسم Hero</h2>
         <div><Label>العنوان</Label><Input value={s.hero.title || ""} onChange={(e) => set("hero", "title", e.target.value)} /></div>
         <div><Label>العنوان الفرعي</Label><Textarea value={s.hero.subtitle || ""} onChange={(e) => set("hero", "subtitle", e.target.value)} /></div>
         <div><Label>نص زر CTA</Label><Input value={s.hero.cta || ""} onChange={(e) => set("hero", "cta", e.target.value)} /></div>
-        <div><Label>رابط صورة Hero</Label><Input value={s.hero.image_url || ""} onChange={(e) => set("hero", "image_url", e.target.value)} /></div>
+        <div>
+          <Label>صورة Hero</Label>
+          <div className="flex items-center gap-3 mt-1">
+            {s.hero.image_url && (
+              <img src={resolveImg(s.hero.image_url)} alt="hero" className="w-24 h-16 rounded-lg object-cover border" />
+            )}
+            <div className="flex-1 space-y-2">
+              <Input value={s.hero.image_url || ""} onChange={(e) => set("hero", "image_url", e.target.value)} placeholder="https://..." />
+              <input ref={heroRef} type="file" accept="image/*" className="hidden" onChange={(e) => { if (e.target.files?.[0]) handleUploadHero(e.target.files[0]); }} />
+              <Button type="button" variant="outline" size="sm" disabled={uploadingHero} onClick={() => heroRef.current?.click()}>
+                {uploadingHero ? <Loader2 className="w-4 h-4 animate-spin me-1" /> : <Upload className="w-4 h-4 me-1" />}
+                رفع من الجهاز
+              </Button>
+            </div>
+          </div>
+        </div>
         <Button onClick={() => save("hero")}>حفظ</Button>
       </Card>
 
+      {/* التواصل */}
       <Card className="p-5 space-y-3">
         <h2 className="font-semibold text-lg">معلومات التواصل</h2>
         {["email", "phone", "whatsapp", "address", "facebook", "instagram", "twitter"].map((k) => (
@@ -87,6 +151,7 @@ export default function AdminSettings() {
         <Button onClick={() => save("contact")}>حفظ</Button>
       </Card>
 
+      {/* Footer */}
       <Card className="p-5 space-y-4">
         <h2 className="font-semibold text-lg">التذييل (Footer)</h2>
         <div><Label>اسم البراند</Label><Input value={s.footer.brand_name || ""} onChange={(e) => setFooter("brand_name", e.target.value)} /></div>
@@ -142,6 +207,7 @@ export default function AdminSettings() {
         <Button onClick={() => save("footer")}>حفظ التذييل</Button>
       </Card>
 
+      {/* ساعات العمل */}
       <Card className="p-5 space-y-3">
         <div className="flex items-center justify-between">
           <h2 className="font-semibold text-lg">ساعات العمل</h2>
